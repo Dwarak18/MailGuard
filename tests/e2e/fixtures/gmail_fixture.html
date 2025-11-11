@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>MailGuard E2E Gmail Fixture</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; }
+    .message { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 800px; }
+    .header { margin-bottom: 12px; }
+    .sender { font-weight: 600; }
+    .subject { color: #333; margin-top: 4px; }
+    .email-body { margin-top: 12px; }
+    a.mock-link { color: blue; }
+  </style>
+</head>
+<body>
+  <div class="message" id="message-1">
+    <div class="header">
+      <div class="sender">Amazon Support &lt;phisher@evil.com&gt;</div>
+      <div class="subject">Verify your account immediately</div>
+    </div>
+    <div class="email-body">
+      <p>Hello,</p>
+      <p>Please <a class="mock-link" href="https://192.168.1.1/verify">verify your account</a> immediately to avoid suspension.</p>
+      <p>Thank you.</p>
+    </div>
+  </div>
+
+  <script src="../helpers/mailguard_inpage.js"></script>
+  <script>
+    // On load, extract a minimal email object and run analysis (simulates content script)
+    window.addEventListener('DOMContentLoaded', function () {
+      const senderText = document.querySelector('.sender').textContent || '';
+      const m = senderText.match(/^(.+?)\s*<(.+?)>$/);
+      var displayName = '';
+      var from = '';
+      if (m) { displayName = m[1].trim(); from = m[2].trim(); } else { from = senderText.trim(); }
+      const subject = document.querySelector('.subject').textContent || '';
+      const links = Array.from(document.querySelectorAll('.email-body a')).map(a => a.href);
+      const body = document.querySelector('.email-body').textContent || '';
+      // call the in-page helper
+      window._lastAnalysis = window.mailguardAnalyzeAndInject({ displayName, from, subject, links, body });
+    });
+  </script>
+</body>
+</html>

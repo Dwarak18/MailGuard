@@ -1,0 +1,117 @@
+[
+  {
+    "id": "phishing-1",
+    "from": "support@paypa1.com",
+    "displayName": "PayPal Support Team",
+    "subject": "Urgent: Verify your PayPal account immediately",
+    "body": "Click here to verify your account. Your account has been temporarily suspended due to unusual activity.",
+    "links": ["https://192.168.1.1/verify"],
+    "expectedSuspicious": true,
+    "expectedScore": 60,
+    "reasons": ["Display name mismatch", "IP address", "Urgency keywords"]
+  },
+  {
+    "id": "phishing-2",
+    "from": "noreply@amazon-security.co",
+    "displayName": "Amazon Account Services",
+    "subject": "Action required: Confirm your identity to protect your account",
+    "body": "We noticed unauthorized access to your account. Please confirm your identity by clicking the link below.",
+    "links": ["https://evil.com@amazon.com/verify"],
+    "expectedSuspicious": true,
+    "expectedScore": 65,
+    "reasons": ["Display name mismatch", "@ symbol in URL", "Account suspension threat"]
+  },
+  {
+    "id": "phishing-3",
+    "from": "admin@mycompany.com",
+    "displayName": "Microsoft Account Team",
+    "subject": "Update your password immediately for security",
+    "body": "Your Microsoft account requires immediate password reset. Visit the link below.",
+    "links": ["https://verify.microsoft.fake/reset%2Fpassword"],
+    "expectedSuspicious": true,
+    "expectedScore": 55,
+    "reasons": ["Display name mismatch", "Urgency keywords", "Encoded characters"]
+  },
+  {
+    "id": "benign-1",
+    "from": "john.doe@company.com",
+    "displayName": "John Doe",
+    "subject": "Meeting notes from today",
+    "body": "Hi everyone, please find the meeting notes attached. Looking forward to your feedback.",
+    "links": ["https://company.sharepoint.com/sites/projects/meeting-notes"],
+    "expectedSuspicious": false,
+    "expectedScore": 0,
+    "reasons": []
+  },
+  {
+    "id": "benign-2",
+    "from": "newsletter@github.com",
+    "displayName": "GitHub",
+    "subject": "Your weekly digest - Top repos in your feed",
+    "body": "Here are the top repositories trending in your network this week.",
+    "links": [
+      "https://github.com/trending",
+      "https://github.com/notifications"
+    ],
+    "expectedSuspicious": false,
+    "expectedScore": 0,
+    "reasons": []
+  },
+  {
+    "id": "benign-3",
+    "from": "support@digitalocean.com",
+    "displayName": "DigitalOcean Support",
+    "subject": "Your invoice for November 2024",
+    "body": "Thank you for being a DigitalOcean customer. Your invoice is ready for download.",
+    "links": ["https://cloud.digitalocean.com/invoices/123"],
+    "expectedSuspicious": false,
+    "expectedScore": 0,
+    "reasons": []
+  },
+  {
+    "id": "suspicious-1",
+    "from": "promotions@retailstore.com",
+    "displayName": "Apple Store",
+    "subject": "Your account verification is pending",
+    "body": "Please verify your account within 24 hours to avoid losing access.",
+    "links": ["https://10.0.0.1/account/verify"],
+    "expectedSuspicious": true,
+    "expectedScore": 50,
+    "reasons": ["Display name mismatch", "IP address", "Urgency keywords"]
+  },
+  {
+    "id": "suspicious-2",
+    "from": "user@example.com",
+    "displayName": "Bank of America",
+    "subject": "Unusual activity on your account",
+    "body": "We detected unauthorized access. Confirm your identity immediately.",
+    "links": [
+      "https://example.com/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/very/very/long/path/that/exceeds/one/hundred/characters/total"
+    ],
+    "expectedSuspicious": true,
+    "expectedScore": 45,
+    "reasons": ["Display name mismatch", "Long path", "Account suspension threat"]
+  },
+  {
+    "id": "edge-case-1",
+    "from": "urgent.news@newsletter.net",
+    "displayName": "Urgent News",
+    "subject": "Breaking news in your industry",
+    "body": "Check out this urgent update from your industry. Click to read more.",
+    "links": ["https://newsletter.net/articles/urgent-news-2024"],
+    "expectedSuspicious": false,
+    "expectedScore": 10,
+    "reasons": ["Contains urgency trigger (benign context)"]
+  },
+  {
+    "id": "edge-case-2",
+    "from": "confirm.receipt@shop.com",
+    "displayName": "Shop Confirmation",
+    "subject": "Order confirmation - Please verify details",
+    "body": "Your order has been placed. Please verify the delivery address is correct.",
+    "links": ["https://shop.com/orders/verify"],
+    "expectedSuspicious": false,
+    "expectedScore": 10,
+    "reasons": ["Contains verification keyword (benign context)"]
+  }
+]
