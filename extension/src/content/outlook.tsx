@@ -123,91 +123,215 @@ function injectOutlookBanner(reasons: string[], score: number): void {
  */
 function createBanner(reasons: string[], score: number): HTMLElement {
   const banner = document.createElement('div');
+  
+  // Determine severity level
+  let severity = 'info';
+  let iconEmoji = '💡';
+  if (score >= 65) {
+    severity = 'critical';
+    iconEmoji = '🔴';
+  } else if (score >= 35) {
+    severity = 'warning';
+    iconEmoji = '⚠️';
+  }
+  
+  const bgGradient = severity === 'critical' 
+    ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)'
+    : severity === 'warning'
+    ? 'linear-gradient(135deg, #ffa502 0%, #ff7a02 100%)'
+    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  
+  const borderColor = severity === 'critical' 
+    ? '#cc0000'
+    : severity === 'warning'
+    ? '#ff7a02'
+    : '#667eea';
+
   banner.style.cssText = `
-    padding: 12px 16px;
-    margin: 12px 0;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    padding: 20px 24px;
+    margin: 16px 0;
+    background: ${bgGradient};
     color: white;
-    border-radius: 6px;
+    border-radius: 12px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    border-left: 4px solid #cc0000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-left: 5px solid ${borderColor};
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     z-index: 10000;
+    animation: slideDown 0.4s ease-out;
   `;
 
-  const header = document.createElement('div');
-  header.style.cssText = 'font-weight: 600; margin-bottom: 8px; font-size: 14px;';
-  header.textContent = '⚠️ Suspicious Email Detected';
+  // Add animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+  banner.appendChild(style);
 
+  // Header with icon
+  const header = document.createElement('div');
+  header.style.cssText = `
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  `;
+  const headerIcon = document.createElement('span');
+  headerIcon.textContent = iconEmoji;
+  headerIcon.style.cssText = 'font-size: 20px;';
+  header.appendChild(headerIcon);
+  const headerText = document.createElement('span');
+  headerText.textContent = severity === 'critical' 
+    ? 'HIGH RISK - Likely Phishing'
+    : severity === 'warning'
+    ? 'Suspicious Email Detected'
+    : 'Email Analysis Complete';
+  header.appendChild(headerText);
+
+  // Score bar
   const scoreBar = document.createElement('div');
   scoreBar.style.cssText = `
-    font-size: 12px;
-    margin: 8px 0;
-    padding: 4px 0;
-  `;
-  scoreBar.textContent = `Risk Score: ${score}/100`;
-
-  const reasonsList = document.createElement('ul');
-  reasonsList.style.cssText = `
-    margin: 8px 0;
-    padding-left: 20px;
     font-size: 13px;
-    line-height: 1.4;
+    margin: 12px 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   `;
+  const scoreLabel = document.createElement('span');
+  scoreLabel.textContent = 'Risk Score:';
+  scoreBar.appendChild(scoreLabel);
+  
+  const scoreValue = document.createElement('span');
+  scoreValue.style.cssText = `
+    font-weight: 700;
+    font-size: 18px;
+    min-width: 40px;
+  `;
+  scoreValue.textContent = `${score}`;
+  scoreBar.appendChild(scoreValue);
+  
+  const scoreMax = document.createElement('span');
+  scoreMax.textContent = '/ 100';
+  scoreBar.appendChild(scoreMax);
+
+  // Visual score bar
+  const progressBar = document.createElement('div');
+  progressBar.style.cssText = `
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  `;
+  const progress = document.createElement('div');
+  progress.style.cssText = `
+    height: 100%;
+    width: ${Math.min(score, 100)}%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  `;
+  progressBar.appendChild(progress);
+  scoreBar.appendChild(progressBar);
+
+  // Reasons list
+  const reasonsList = document.createElement('div');
+  reasonsList.style.cssText = `
+    margin: 16px 0 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.6;
+  `;
+
+  const reasonsTitle = document.createElement('div');
+  reasonsTitle.style.cssText = `
+    font-weight: 600;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  `;
+  reasonsTitle.textContent = 'Why this email is suspicious:';
+  reasonsList.appendChild(reasonsTitle);
 
   for (const reason of reasons) {
-    const li = document.createElement('li');
-    li.textContent = reason;
-    li.style.marginBottom = '4px';
-    reasonsList.appendChild(li);
+    const reasonItem = document.createElement('div');
+    reasonItem.style.cssText = `
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      border-left: 3px solid rgba(255, 255, 255, 0.5);
+      word-break: break-word;
+    `;
+    reasonItem.innerHTML = `<span style="margin-right: 6px;">•</span>${reason}`;
+    reasonsList.appendChild(reasonItem);
   }
 
+  // Actions
   const actions = document.createElement('div');
   actions.style.cssText = `
-    margin-top: 12px;
+    margin-top: 16px;
     display: flex;
-    gap: 8px;
-    font-size: 12px;
+    gap: 10px;
+    font-size: 13px;
+    flex-wrap: wrap;
   `;
 
-  const ignoreBtn = document.createElement('button');
-  ignoreBtn.id = 'mailguard-dismiss';
-  ignoreBtn.textContent = 'Dismiss';
-  ignoreBtn.style.cssText = `
-    padding: 6px 12px;
+  const dismissBtn = document.createElement('button');
+  dismissBtn.id = 'mailguard-dismiss';
+  dismissBtn.textContent = '✕ Dismiss';
+  dismissBtn.style.cssText = `
+    padding: 10px 16px;
     background: rgba(255, 255, 255, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.5);
     color: white;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 500;
-    transition: background 0.2s;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 13px;
   `;
-  ignoreBtn.onmouseover = () => {
-    ignoreBtn.style.background = 'rgba(255, 255, 255, 0.4)';
+  dismissBtn.onmouseover = () => {
+    dismissBtn.style.background = 'rgba(255, 255, 255, 0.35)';
+    dismissBtn.style.transform = 'translateY(-2px)';
   };
-  ignoreBtn.onmouseout = () => {
-    ignoreBtn.style.background = 'rgba(255, 255, 255, 0.25)';
+  dismissBtn.onmouseout = () => {
+    dismissBtn.style.background = 'rgba(255, 255, 255, 0.25)';
+    dismissBtn.style.transform = 'translateY(0)';
   };
 
   const reportBtn = document.createElement('button');
   reportBtn.id = 'mailguard-report';
-  reportBtn.textContent = 'Report Phishing';
+  reportBtn.textContent = '🚨 Report Phishing';
   reportBtn.style.cssText = `
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(0, 0, 0, 0.3);
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     color: white;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 500;
-    transition: background 0.2s;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 13px;
   `;
   reportBtn.onmouseover = () => {
-    reportBtn.style.background = 'rgba(0, 0, 0, 0.3)';
+    reportBtn.style.background = 'rgba(0, 0, 0, 0.35)';
+    reportBtn.style.transform = 'translateY(-2px)';
   };
   reportBtn.onmouseout = () => {
-    reportBtn.style.background = 'rgba(0, 0, 0, 0.2)';
+    reportBtn.style.background = 'rgba(0, 0, 0, 0.25)';
+    reportBtn.style.transform = 'translateY(0)';
   };
 
   reportBtn.addEventListener('click', () => {
@@ -215,10 +339,22 @@ function createBanner(reasons: string[], score: number): HTMLElement {
       type: 'report',
       email: currentEmailData,
     });
-    alert('Thank you for reporting. We will review this email.');
+    const confirmMsg = document.createElement('div');
+    confirmMsg.textContent = '✓ Report submitted - Thank you!';
+    confirmMsg.style.cssText = `
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      margin-top: 8px;
+      text-align: center;
+      font-weight: 600;
+    `;
+    reportBtn.parentElement?.insertBefore(confirmMsg, reportBtn.nextSibling);
+    reportBtn.style.opacity = '0.5';
+    reportBtn.disabled = true;
   });
 
-  actions.appendChild(ignoreBtn);
+  actions.appendChild(dismissBtn);
   actions.appendChild(reportBtn);
 
   banner.appendChild(header);

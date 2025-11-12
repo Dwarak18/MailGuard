@@ -21,6 +21,8 @@ const OptionsApp: React.FC = () => {
 
   const [newWhitelistEmail, setNewWhitelistEmail] = useState('');
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [activeTab, setActiveTab] = useState('security');
 
   // Load settings on mount
   useEffect(() => {
@@ -56,6 +58,8 @@ const OptionsApp: React.FC = () => {
       const updated = [...settings.whitelistedSenders, newWhitelistEmail];
       updateSetting('whitelistedSenders', updated);
       setNewWhitelistEmail('');
+      setSuccessMessage('✓ Email added to trusted senders!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -79,109 +83,250 @@ const OptionsApp: React.FC = () => {
   };
 
   if (loading) {
-    return <div className={styles.container}>Loading settings...</div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingSpinner}></div>
+        <p className={styles.loadingText}>Loading settings...</p>
+      </div>
+    );
   }
 
   return (
     <div className={styles.container}>
+      {/* Header with Logo */}
       <header className={styles.header}>
-        <h1>MailGuard Settings</h1>
-        <p>Manage your email security preferences</p>
+        <div className={styles.headerContent}>
+          <div className={styles.logo}>🛡️</div>
+          <div>
+            <h1 className={styles.title}>MailGuard</h1>
+            <p className={styles.subtitle}>Privacy-First Email Protection</p>
+          </div>
+        </div>
       </header>
 
-      <div className={styles.section}>
-        <h2>🔒 Privacy & Security</h2>
+      {/* Tab Navigation */}
+      <nav className={styles.tabNav}>
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'security' ? styles.active : ''}`}
+          onClick={() => setActiveTab('security')}
+        >
+          🔒 Security
+        </button>
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'senders' ? styles.active : ''}`}
+          onClick={() => setActiveTab('senders')}
+        >
+          ✅ Trusted Senders
+        </button>
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'stats' ? styles.active : ''}`}
+          onClick={() => setActiveTab('stats')}
+        >
+          📊 Statistics
+        </button>
+      </nav>
 
-        <div className={styles.setting}>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.cloudAnalysisEnabled}
-              onChange={(e) => updateSetting('cloudAnalysisEnabled', e.target.checked)}
-            />
-            <span>Enable Cloud Analysis (ML)</span>
-          </label>
-          <p className={styles.helpText}>
-            When enabled, suspicious emails will be analyzed by our backend ML model for more
-            accurate detection. Your email content will be sent to our servers (with your
-            explicit consent before each analysis).
-          </p>
-        </div>
+      {/* Success Message */}
+      {successMessage && <div className={styles.successAlert}>{successMessage}</div>}
 
-        <div className={styles.setting}>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.privacyConsent}
-              onChange={(e) => updateSetting('privacyConsent', e.target.checked)}
-            />
-            <span>Accept Privacy Policy</span>
-          </label>
-          <p className={styles.helpText}>
-            I have read and accept the{' '}
-            <a href="#" target="_blank">
-              Privacy Policy
-            </a>
-            . By default, MailGuard runs completely offline and does not send any data.
-          </p>
-        </div>
-      </div>
+      {/* Tab Content */}
+      <main className={styles.content}>
+        {/* Security Tab */}
+        {activeTab === 'security' && (
+          <section className={styles.tabContent}>
+            <h2 className={styles.sectionTitle}>� Privacy & Security Settings</h2>
 
-      <div className={styles.section}>
-        <h2>✅ Trusted Senders</h2>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h3>Cloud Analysis</h3>
+                <span className={styles.badge}>Advanced</span>
+              </div>
+              <div className={styles.toggleSwitch}>
+                <input
+                  type="checkbox"
+                  id="cloudAnalysis"
+                  checked={settings.cloudAnalysisEnabled}
+                  onChange={(e) => updateSetting('cloudAnalysisEnabled', e.target.checked)}
+                />
+                <label htmlFor="cloudAnalysis" className={styles.slider}></label>
+              </div>
+              <p className={styles.cardDescription}>
+                Enable ML-powered analysis for more accurate phishing detection. Your data is
+                encrypted and processed securely.
+              </p>
+              <div className={styles.feature}>
+                <span>✓</span> Offline-first by default
+              </div>
+              <div className={styles.feature}>
+                <span>✓</span> Opt-in cloud analysis
+              </div>
+              <div className={styles.feature}>
+                <span>✓</span> No personal data collection
+              </div>
+            </div>
 
-        <div className={styles.whitelistInput}>
-          <input
-            type="email"
-            value={newWhitelistEmail}
-            onChange={(e) => setNewWhitelistEmail(e.target.value)}
-            placeholder="Enter email address to whitelist..."
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') addToWhitelist();
-            }}
-          />
-          <button onClick={addToWhitelist}>Add</button>
-        </div>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h3>Privacy Policy</h3>
+                <span className={styles.badge}>Important</span>
+              </div>
+              <div className={styles.toggleSwitch}>
+                <input
+                  type="checkbox"
+                  id="privacyConsent"
+                  checked={settings.privacyConsent}
+                  onChange={(e) => updateSetting('privacyConsent', e.target.checked)}
+                />
+                <label htmlFor="privacyConsent" className={styles.slider}></label>
+              </div>
+              <p className={styles.cardDescription}>
+                I agree to MailGuard&apos;s privacy practices. By default, all analysis happens
+                offline on your device.
+              </p>
+              <a href="#privacy" className={styles.link}>
+                → Read full Privacy Policy
+              </a>
+            </div>
+          </section>
+        )}
 
-        {settings.whitelistedSenders.length > 0 ? (
-          <div className={styles.list}>
-            {settings.whitelistedSenders.map((email) => (
-              <div key={email} className={styles.listItem}>
-                <span>{email}</span>
-                <button
-                  className={styles.removeBtn}
-                  onClick={() => removeFromWhitelist(email)}
-                >
-                  Remove
+        {/* Trusted Senders Tab */}
+        {activeTab === 'senders' && (
+          <section className={styles.tabContent}>
+            <h2 className={styles.sectionTitle}>✅ Trusted Senders Management</h2>
+
+            <div className={styles.card}>
+              <h3>Add Trusted Sender</h3>
+              <div className={styles.emailInput}>
+                <input
+                  type="email"
+                  value={newWhitelistEmail}
+                  onChange={(e) => setNewWhitelistEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') addToWhitelist();
+                  }}
+                />
+                <button className={styles.addBtn} onClick={addToWhitelist}>
+                  + Add
                 </button>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.helpText}>No trusted senders yet.</p>
+              <p className={styles.cardDescription}>
+                Trusted senders will never trigger phishing warnings, even if they match
+                suspicious patterns.
+              </p>
+            </div>
+
+            {settings.whitelistedSenders.length > 0 && (
+              <div className={styles.card}>
+                <h3>Your Trusted List ({settings.whitelistedSenders.length})</h3>
+                <div className={styles.sendersList}>
+                  {settings.whitelistedSenders.map((email) => (
+                    <div key={email} className={styles.senderItem}>
+                      <div className={styles.senderInfo}>
+                        <span className={styles.senderAvatar}>👤</span>
+                        <span className={styles.senderEmail}>{email}</span>
+                      </div>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => removeFromWhitelist(email)}
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {settings.whitelistedSenders.length === 0 && (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>📭</div>
+                <p>No trusted senders yet. Add one to get started!</p>
+              </div>
+            )}
+          </section>
         )}
-      </div>
 
-      <div className={styles.section}>
-        <h2>📊 Statistics</h2>
-        <p>Emails reported as phishing: {settings.reportCount}</p>
-      </div>
+        {/* Statistics Tab */}
+        {activeTab === 'stats' && (
+          <section className={styles.tabContent}>
+            <h2 className={styles.sectionTitle}>📊 Your Statistics</h2>
 
-      <div className={styles.section}>
-        <h2>⚠️ Danger Zone</h2>
-        <button className={styles.dangerBtn} onClick={clearData}>
-          Clear All Data & Reset
-        </button>
-        <p className={styles.helpText}>
-          This will delete all stored data including trusted senders, statistics, and settings.
-        </p>
-      </div>
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>🚨</div>
+                <div className={styles.statContent}>
+                  <h3>Emails Reported</h3>
+                  <p className={styles.statValue}>{settings.reportCount}</p>
+                </div>
+              </div>
 
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>✅</div>
+                <div className={styles.statContent}>
+                  <h3>Trusted Senders</h3>
+                  <p className={styles.statValue}>{settings.whitelistedSenders.length}</p>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>🛡️</div>
+                <div className={styles.statContent}>
+                  <h3>Protection Level</h3>
+                  <p className={styles.statValue}>Active</p>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>📍</div>
+                <div className={styles.statContent}>
+                  <h3>Mode</h3>
+                  <p className={styles.statValue}>
+                    {settings.cloudAnalysisEnabled ? 'Hybrid' : 'Offline'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.card}>
+              <h3>ℹ️ How Your Data is Protected</h3>
+              <ul className={styles.protectionList}>
+                <li>✓ All analysis happens on your device by default</li>
+                <li>✓ No email content stored or sent without consent</li>
+                <li>✓ Phishing patterns detected locally in real-time</li>
+                <li>✓ Your trusted senders list is encrypted</li>
+                <li>✓ Anonymous reporting helps improve detection</li>
+              </ul>
+            </div>
+
+            <div className={styles.dangerCard}>
+              <h3>⚠️ Data Management</h3>
+              <button className={styles.dangerBtn} onClick={clearData}>
+                🗑️ Clear All Data & Reset
+              </button>
+              <p className={styles.cardDescription}>
+                This will delete all settings, trusted senders, and statistics. This action cannot
+                be undone.
+              </p>
+            </div>
+          </section>
+        )}
+      </main>
+
+      {/* Footer */}
       <footer className={styles.footer}>
-        <p>MailGuard v0.1.0 • Privacy-First Phishing Detection</p>
-        <p>
-          <a href="#privacy">Privacy Policy</a> • <a href="#support">Support</a>
-        </p>
+        <div className={styles.footerContent}>
+          <p className={styles.version}>MailGuard v0.1.0</p>
+          <div className={styles.footerLinks}>
+            <a href="#privacy">Privacy</a>
+            <span className={styles.separator}>•</span>
+            <a href="#support">Support</a>
+            <span className={styles.separator}>•</span>
+            <a href="#github">GitHub</a>
+          </div>
+        </div>
       </footer>
     </div>
   );

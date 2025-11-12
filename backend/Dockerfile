@@ -4,14 +4,14 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy backend source
-COPY src ./src
-COPY tsconfig.json ./tsconfig.json
+COPY backend/src ./src
+COPY backend/tsconfig.json ./tsconfig.json
 
 # Build TypeScript
 RUN npm run build
@@ -22,10 +22,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install production dependencies only
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
