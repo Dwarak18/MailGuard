@@ -1,6 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { copyFileSync } from 'fs';
+import { copyFileSync, existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -8,8 +12,22 @@ export default defineConfig({
     {
       name: 'copy-manifest',
       generateBundle() {
-        copyFileSync('src/manifest.json', 'dist/manifest.json');
-        copyFileSync('src/ui/options/options.html', 'dist/options.html');
+        const srcManifest = resolve(__dirname, 'src/manifest.json');
+        const distManifest = resolve(__dirname, 'dist/manifest.json');
+        const srcOptions = resolve(__dirname, 'src/ui/options/options.html');
+        const distOptions = resolve(__dirname, 'dist/options.html');
+        
+        if (!existsSync(srcManifest)) {
+          console.error(`Source manifest not found: ${srcManifest}`);
+          throw new Error(`Manifest file not found at ${srcManifest}`);
+        }
+        if (!existsSync(srcOptions)) {
+          console.error(`Source options.html not found: ${srcOptions}`);
+          throw new Error(`Options HTML not found at ${srcOptions}`);
+        }
+        
+        copyFileSync(srcManifest, distManifest);
+        copyFileSync(srcOptions, distOptions);
       }
     }
   ],
