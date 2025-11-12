@@ -66,11 +66,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run heuristics tests
-        run: npm run test:heuristics
+      - name: Run tests with coverage
+        run: npm run test
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
@@ -128,22 +125,3 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate || true
-
-  docker-build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: backend
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

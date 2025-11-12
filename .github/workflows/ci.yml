@@ -1,180 +1,72 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
-  setup:
+  lint-and-type-check:
     runs-on: ubuntu-latest
-    outputs:
-      node-version: ${{ steps.set-versions.outputs.node-version }}
-    steps:
-      - name: Set versions
-        id: set-versions
-        run: echo "node-version=18" >> $GITHUB_OUTPUT
-
-  lint:
-    name: Lint & Type Check
-    runs-on: ubuntu-latest
-    needs: setup
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version: '18'
           cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run type-check
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run type-check
-
-  test-unit:
-    name: Unit Tests
+  test:
     runs-on: ubuntu-latest
-    needs: setup
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version: '18'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm test
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+      - run: npm ci
+      - run: npm run test
+      - uses: codecov/codecov-action@v3
         with:
           files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
           fail_ci_if_error: false
 
-      - name: Archive coverage reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-
   build:
-    name: Build
     runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        include:
-          - name: Extension
-            build-cmd: npm run ext:build
-          - name: Backend
-            build-cmd: npm run backend:build
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version: '18'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build ${{ matrix.name }}
-        run: ${{ matrix.build-cmd }}
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.name }}
+          name: build-artifacts
           path: |
             extension/dist/
             backend/dist/
           if-no-files-found: ignore
 
-  test-e2e:
-    name: E2E Tests (Playwright)
+  e2e:
     runs-on: ubuntu-latest
-    needs: [setup, build]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version: '18'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run E2E tests
-        run: npm run test:e2e
-
-      - name: Upload Playwright report
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate || true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ needs.setup.outputs.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check for vulnerable dependencies
-        run: npm audit fix --dry-run || true
-
-  all-checks-passed:
-    name: All Checks Passed
-    runs-on: ubuntu-latest
-    needs: [lint, test-unit, build, test-e2e, security-scan]
-    if: always()
-    steps:
-      - name: Check job status
-        run: |
-          if [[ "${{ needs.lint.result }}" != "success" || \
-                "${{ needs.test-unit.result }}" != "success" || \
-                "${{ needs.build.result }}" != "success" || \
-                "${{ needs.test-e2e.result }}" != "success" ]]; then
-            echo "❌ CI Pipeline failed"
-            exit 1
-          fi
-          echo "✅ All checks passed!"
