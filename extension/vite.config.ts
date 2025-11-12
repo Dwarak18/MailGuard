@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { copyFileSync, existsSync } from 'fs';
+import { copyFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,23 +11,37 @@ export default defineConfig({
     react(),
     {
       name: 'copy-manifest',
-      generateBundle() {
+      writeBundle() {
         const srcManifest = resolve(__dirname, 'src/manifest.json');
         const distManifest = resolve(__dirname, 'dist/manifest.json');
         const srcOptions = resolve(__dirname, 'src/ui/options/options.html');
         const distOptions = resolve(__dirname, 'dist/options.html');
         
-        if (!existsSync(srcManifest)) {
-          console.error(`Source manifest not found: ${srcManifest}`);
-          throw new Error(`Manifest file not found at ${srcManifest}`);
-        }
-        if (!existsSync(srcOptions)) {
-          console.error(`Source options.html not found: ${srcOptions}`);
-          throw new Error(`Options HTML not found at ${srcOptions}`);
-        }
+        console.log(`Copying manifest from: ${srcManifest}`);
+        console.log(`Copying to: ${distManifest}`);
+        console.log(`Manifest exists: ${existsSync(srcManifest)}`);
         
         copyFileSync(srcManifest, distManifest);
         copyFileSync(srcOptions, distOptions);
+        
+        // Copy icons directory
+        const srcIconsDir = resolve(__dirname, 'src/icons');
+        const distIconsDir = resolve(__dirname, 'dist/icons');
+        
+        if (existsSync(srcIconsDir)) {
+          if (!existsSync(distIconsDir)) {
+            mkdirSync(distIconsDir, { recursive: true });
+          }
+          const icons = readdirSync(srcIconsDir);
+          for (const icon of icons) {
+            const srcIcon = resolve(srcIconsDir, icon);
+            const distIcon = resolve(distIconsDir, icon);
+            copyFileSync(srcIcon, distIcon);
+          }
+          console.log('✓ Icons copied successfully');
+        }
+        
+        console.log('✓ Manifest and options copied successfully');
       }
     }
   ],

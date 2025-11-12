@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import * as path from 'path';
 
 /**
@@ -15,46 +15,15 @@ import * as path from 'path';
  */
 
 const EXTENSION_PATH = path.resolve(__dirname, '../../extension/dist');
-const GMAIL_TEST_URL = 'file:///tmp/gmail-mock.html';
-
-// Mock HTML for Gmail interface
-const GMAIL_MOCK_HTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Gmail - Test Mock</title>
-</head>
-<body>
-  <div role="main">
-    <div role="presentation">
-      <div class="gE">
-        <div class="gD">Suspicious Sender</div>
-        <div class="g3">phisher@evil.com</div>
-        <div data-subject="Verify your account immediately">Subject</div>
-        <a href="https://192.168.1.1/verify">Verify link</a>
-      </div>
-    </div>
-  </div>
-  <script>
-    // Simulate email being opened
-    document.dispatchEvent(new Event('DOMContentLoaded'));
-  </script>
-</body>
-</html>
-`;
 
 test.describe('MailGuard Extension E2E Tests', () => {
-  let page: Page;
-
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async () => {
     // Note: Full extension testing requires Chrome with --load-extension flag
     // This is a simplified example showing the test structure
     console.log('Extension path:', EXTENSION_PATH);
   });
 
-  test('should detect phishing email with suspicious URL', async ({
-    page: testPage,
-  }) => {
+  test('should detect phishing email with suspicious URL', async () => {
     // This test demonstrates the flow
     // In production, you'd load the actual Gmail with extension
 
@@ -63,13 +32,6 @@ test.describe('MailGuard Extension E2E Tests', () => {
       displayName: 'Amazon Support',
       subject: 'Verify your account immediately',
       links: ['https://192.168.1.1/verify'],
-    };
-
-    // Simulate sending analysis request to background worker
-    const analysisRequest = {
-      type: 'analyze',
-      email: suspiciousEmail,
-      source: 'gmail',
     };
 
     // In actual test, this would go through chrome.runtime.sendMessage
