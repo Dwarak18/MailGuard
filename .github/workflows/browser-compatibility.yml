@@ -3,26 +3,46 @@ name: Browser Compatibility
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+
+env:
+  NODE_VERSION: '18'
 
 jobs:
   e2e-browsers:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: npx playwright install ${{ matrix.browser }} --with-deps
-      - run: npm run test:e2e -- --project=${{ matrix.browser }}
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-${{ matrix.browser }}
-          path: playwright-report/
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Install Playwright for ${{ matrix.browser }}
+        run: npx playwright install ${{ matrix.browser }} --with-deps
+
+      - name: Run E2E tests on ${{ matrix.browser }}
+        run: npm run test:e2e -- --project=${{ matrix.browser }}
+
+      - name: Upload report for ${{ matrix.browser }}
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 14

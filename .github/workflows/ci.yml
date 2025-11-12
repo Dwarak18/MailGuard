@@ -6,67 +6,120 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  NODE_VERSION: '18'
+  CACHE_NAME_PREFIX: ${{ github.workflow }}
+  REGISTRY: ghcr.io
+
 jobs:
   lint-and-type-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run type-check
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npm run type-check
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run test
-      - uses: codecov/codecov-action@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
+
+      - name: Upload coverage reports
+        if: always()
+        uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
+          flags: unittests
           fail_ci_if_error: false
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run ext:build
+
+      - name: Build backend
+        run: npm run backend:build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ github.run_number }}
           path: |
             extension/dist/
             backend/dist/
-          if-no-files-found: ignore
+          retention-days: 7
+          if-no-files-found: warn
 
-  e2e:
+  e2e-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: npx playwright install --with-deps
-      - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ github.run_number }}
           path: playwright-report/
-          retention-days: 30
+          retention-days: 14
