@@ -9,11 +9,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy TypeScript source
-COPY backend/src ./src
-COPY backend/tsconfig.json ./tsconfig.json
+# Copy backend source
+COPY src ./src
+COPY tsconfig.json ./tsconfig.json
 
-# Build
+# Build TypeScript
 RUN npm run build
 
 # Runtime stage
@@ -32,10 +32,10 @@ COPY --from=builder /app/dist ./dist
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-# Expose port
-EXPOSE 3000
+# Expose port (Render will set PORT env var)
+EXPOSE ${PORT:-3000}
 
 # Set environment
 ENV NODE_ENV=production

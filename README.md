@@ -197,10 +197,24 @@ npm run clean && npm run ext:build
 
 ---
 
-## � Deployment Options
+## 🚀 Deployment Options
 
 ### Personal Use
 Load unpacked locally (done!)
+
+### Backend API (Render - Free)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dwarak18/MailGuard)
+
+**Quick Deploy:**
+```bash
+./scripts/deploy-render.sh  # Test & deploy helper
+```
+
+**Manual Setup:**
+1. Go to [Render](https://dashboard.render.com) → New Web Service
+2. Connect GitHub → MailGuard repository
+3. Build: `cd backend && npm ci && npm run build`
+4. Start: `cd backend && npm start`
 
 ### Share with Friends/Team
 GitHub Releases + download link

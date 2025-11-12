@@ -1,0 +1,53 @@
+# Render Deployment Configuration for MailGuard Backend
+
+version: "1"
+
+services:
+  - type: web
+    name: mailguard-backend
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: CORS_ORIGIN
+        value: https://gmail.com,https://outlook.live.com,https://outlook.office.com,chrome-extension://*
+    healthCheckPath: /health
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    autoDeploy: true
+    disk:
+      name: mailguard-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
+
+  - type: web
+    name: mailguard-frontend
+    runtime: static
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm ci && npm run ext:build
+    staticPublishPath: extension/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+databases: []
+
+volumes: []

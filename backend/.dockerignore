@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+README.md
+.nyc_output
+coverage
+.coverage
+*.lcov
+.DS_Store
+dist
+*.log
+*.tmp
+.cache

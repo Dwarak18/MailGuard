@@ -1,0 +1,22 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "name": "mailguard-backend",
+      "env": "node",
+      "plan": "free",
+      "buildCommand": "cd backend && npm ci && npm run build",
+      "startCommand": "cd backend && npm start",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "CORS_ORIGIN", 
+          "value": "https://gmail.com,https://outlook.live.com,https://outlook.office.com,chrome-extension://*"
+        }
+      ]
+    }
+  ]
+}
